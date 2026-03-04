@@ -1,4 +1,4 @@
--- NovaUI - Modern UI Library
+-- NovaUI - Modern UI Library (FIXED)
 local cloneref = (cloneref or clonereference or function(instance)
     return instance
 end)
@@ -70,8 +70,9 @@ local function Create(className, properties)
     local obj = Instance.new(className)
     
     for prop, value in pairs(properties) do
-        if typeof(value) == "function" then
-            obj[prop] = value()
+        -- Handle direct color values (not string references)
+        if typeof(value) == "Color3" then
+            obj[prop] = value
         elseif prop == "Position" or prop == "Size" or prop == "TextSize" then
             obj[prop] = ApplyDPI(value)
         elseif prop == "TextColor3" and value == "Text" then
@@ -80,8 +81,17 @@ local function Create(className, properties)
             obj[prop] = Scheme.TextSecondary
         elseif prop == "BackgroundColor3" and value == "Surface" then
             obj[prop] = Scheme.Surface
+        elseif prop == "BackgroundColor3" and value == "SurfaceLight" then
+            obj[prop] = Scheme.SurfaceLight
         elseif prop == "BackgroundColor3" and value == "Primary" then
             obj[prop] = Scheme.Primary
+        elseif prop == "BackgroundColor3" and value == "Background" then
+            obj[prop] = Scheme.Background
+        elseif prop == "BorderColor3" and value == "Border" then
+            obj[prop] = Scheme.Border
+        elseif prop == "BackgroundColor3" then
+            -- Default to surface if it's a string we don't recognize
+            obj[prop] = Scheme.Surface
         else
             obj[prop] = value
         end
@@ -142,7 +152,7 @@ function Library:CreateWindow(config)
         Name = "MainWindow",
         Size = size,
         Position = position,
-        BackgroundColor3 = "Surface",
+        BackgroundColor3 = Scheme.Surface,
         BackgroundTransparency = 0.05,
         BorderSizePixel = 0,
         ClipsDescendants = true,
@@ -183,7 +193,7 @@ function Library:CreateWindow(config)
         Position = UDim2.fromOffset(20, 0),
         BackgroundTransparency = 1,
         Text = title,
-        TextColor3 = "Text",
+        TextColor3 = Scheme.Text,
         TextSize = 22,
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -194,10 +204,10 @@ function Library:CreateWindow(config)
     local closeBtn = Create("TextButton", {
         Size = UDim2.new(0, 40, 0, 40),
         Position = UDim2.new(1, -50, 0.5, -20),
-        BackgroundColor3 = "Surface",
+        BackgroundColor3 = Scheme.Surface,
         BackgroundTransparency = 0.5,
         Text = "✕",
-        TextColor3 = "TextSecondary",
+        TextColor3 = Scheme.TextSecondary,
         TextSize = 20,
         FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
         AutoButtonColor = false,
@@ -272,7 +282,7 @@ function Library:CreateWindow(config)
     local tabSidebar = Create("Frame", {
         Name = "TabSidebar",
         Size = UDim2.new(0, 200, 1, 0),
-        BackgroundColor3 = "Surface",
+        BackgroundColor3 = Scheme.Surface,
         BackgroundTransparency = 0.1,
         BorderSizePixel = 0,
         Parent = contentContainer,
@@ -382,7 +392,7 @@ function Library:CreateWindow(config)
         
         local tabButton = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 45),
-            BackgroundColor3 = "Surface",
+            BackgroundColor3 = Scheme.Surface,
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
@@ -399,7 +409,7 @@ function Library:CreateWindow(config)
             Position = UDim2.fromOffset(10, 0),
             BackgroundTransparency = 1,
             Text = icon,
-            TextColor3 = "TextSecondary",
+            TextColor3 = Scheme.TextSecondary,
             TextSize = 18,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
             Parent = tabButton,
@@ -410,7 +420,7 @@ function Library:CreateWindow(config)
             Position = UDim2.fromOffset(40, 0),
             BackgroundTransparency = 1,
             Text = name,
-            TextColor3 = "TextSecondary",
+            TextColor3 = Scheme.TextSecondary,
             TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
@@ -481,27 +491,11 @@ function Library:CreateWindow(config)
             end
         end)
         
-        -- AddLeftGroupbox method
-        function tab:AddLeftGroupbox(title)
-            local groupbox = self:CreateGroupbox(title, leftColumn)
-            table.insert(self.LeftGroups, groupbox)
-            groupbox.Container.Visible = false
-            return groupbox
-        end
-        
-        -- AddRightGroupbox method
-        function tab:AddRightGroupbox(title)
-            local groupbox = self:CreateGroupbox(title, rightColumn)
-            table.insert(self.RightGroups, groupbox)
-            groupbox.Container.Visible = false
-            return groupbox
-        end
-        
         -- CreateGroupbox helper
-        function tab:CreateGroupbox(title, parent)
+        local function createGroupbox(title, parent)
             local container = Create("Frame", {
                 Size = UDim2.new(1, 0, 0, 0),
-                BackgroundColor3 = "Surface",
+                BackgroundColor3 = Scheme.Surface,
                 BackgroundTransparency = 0.2,
                 BorderSizePixel = 0,
                 AutomaticSize = Enum.AutomaticSize.Y,
@@ -524,7 +518,7 @@ function Library:CreateWindow(config)
             if title then
                 local titleBar = Create("Frame", {
                     Size = UDim2.new(1, 0, 0, 45),
-                    BackgroundColor3 = "SurfaceLight",
+                    BackgroundColor3 = Scheme.SurfaceLight,
                     BackgroundTransparency = 0.3,
                     BorderSizePixel = 0,
                     Parent = container,
@@ -549,7 +543,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.fromOffset(12, 0),
                     BackgroundTransparency = 1,
                     Text = title,
-                    TextColor3 = "Text",
+                    TextColor3 = Scheme.Text,
                     TextSize = 16,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
@@ -575,6 +569,7 @@ function Library:CreateWindow(config)
             
             local layout = Create("UIListLayout", {
                 Padding = UDim.new(0, 12),
+                SortOrder = Enum.SortOrder.LayoutOrder,
                 Parent = content,
             })
             
@@ -588,7 +583,7 @@ function Library:CreateWindow(config)
             function group:AddButton(text, callback)
                 local btn = Create("TextButton", {
                     Size = UDim2.new(1, 0, 0, 40),
-                    BackgroundColor3 = "Surface",
+                    BackgroundColor3 = Scheme.Surface,
                     BackgroundTransparency = 0.2,
                     Text = "",
                     AutoButtonColor = false,
@@ -612,7 +607,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.fromOffset(16, 0),
                     BackgroundTransparency = 1,
                     Text = text,
-                    TextColor3 = "Text",
+                    TextColor3 = Scheme.Text,
                     TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
@@ -624,7 +619,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.new(1, -36, 0, 0),
                     BackgroundTransparency = 1,
                     Text = "→",
-                    TextColor3 = "TextSecondary",
+                    TextColor3 = Scheme.TextSecondary,
                     TextSize = 18,
                     FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
                     Parent = btn,
@@ -637,7 +632,7 @@ function Library:CreateWindow(config)
                 
                 btn.MouseLeave:Connect(function()
                     TweenService:Create(btn, Library.TweenInfo, {BackgroundTransparency = 0.2}):Play()
-                    TweenService:Create(arrow, Library.TweenInfo, {TextColor3 = "TextSecondary"}):Play()
+                    TweenService:Create(arrow, Library.TweenInfo, {TextColor3 = Scheme.TextSecondary}):Play()
                 end)
                 
                 btn.MouseButton1Click:Connect(function()
@@ -665,7 +660,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.fromOffset(0, 0),
                     BackgroundTransparency = 1,
                     Text = text,
-                    TextColor3 = "Text",
+                    TextColor3 = Scheme.Text,
                     TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
@@ -675,7 +670,7 @@ function Library:CreateWindow(config)
                 local switch = Create("TextButton", {
                     Size = UDim2.new(0, 50, 0, 24),
                     Position = UDim2.new(1, -50, 0.5, -12),
-                    BackgroundColor3 = value and "Primary" or "Surface",
+                    BackgroundColor3 = value and Scheme.Primary or Scheme.Surface,
                     BackgroundTransparency = value and 0.2 or 0.4,
                     Text = "",
                     AutoButtonColor = false,
@@ -697,7 +692,7 @@ function Library:CreateWindow(config)
                 local knob = Create("Frame", {
                     Size = UDim2.new(0, 20, 0, 20),
                     Position = UDim2.new(value and 1 or 0, value and -22 or 2, 0.5, -10),
-                    BackgroundColor3 = "Text",
+                    BackgroundColor3 = Scheme.Text,
                     BorderSizePixel = 0,
                     Parent = switch,
                 })
@@ -744,7 +739,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.fromOffset(0, 0),
                     BackgroundTransparency = 1,
                     Text = text,
-                    TextColor3 = "Text",
+                    TextColor3 = Scheme.Text,
                     TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
@@ -756,7 +751,7 @@ function Library:CreateWindow(config)
                     Position = UDim2.new(1, -50, 0, 0),
                     BackgroundTransparency = 1,
                     Text = tostring(value),
-                    TextColor3 = "Primary",
+                    TextColor3 = Scheme.Primary,
                     TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Right,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
@@ -766,7 +761,7 @@ function Library:CreateWindow(config)
                 local bar = Create("Frame", {
                     Size = UDim2.new(1, 0, 0, 4),
                     Position = UDim2.new(0, 0, 1, -8),
-                    BackgroundColor3 = "Surface",
+                    BackgroundColor3 = Scheme.Surface,
                     BackgroundTransparency = 0.5,
                     BorderSizePixel = 0,
                     Parent = slider,
@@ -779,7 +774,7 @@ function Library:CreateWindow(config)
                 
                 local fill = Create("Frame", {
                     Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
-                    BackgroundColor3 = "Primary",
+                    BackgroundColor3 = Scheme.Primary,
                     BorderSizePixel = 0,
                     Parent = bar,
                 })
@@ -792,7 +787,7 @@ function Library:CreateWindow(config)
                 local knob = Create("Frame", {
                     Size = UDim2.new(0, 12, 0, 12),
                     Position = UDim2.new((value - min) / (max - min), -6, 0.5, -6),
-                    BackgroundColor3 = "Text",
+                    BackgroundColor3 = Scheme.Text,
                     BorderSizePixel = 0,
                     Parent = bar,
                 })
@@ -850,7 +845,7 @@ function Library:CreateWindow(config)
                     Size = UDim2.new(1, 0, 0, isSub and 20 or 25),
                     BackgroundTransparency = 1,
                     Text = text,
-                    TextColor3 = isSub and "TextSecondary" or "Text",
+                    TextColor3 = isSub and Scheme.TextSecondary or Scheme.Text,
                     TextSize = isSub and 13 or 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", 
@@ -874,6 +869,22 @@ function Library:CreateWindow(config)
                 return divider
             end
             
+            return group
+        end
+        
+        -- AddLeftGroupbox method
+        function tab:AddLeftGroupbox(title)
+            local group = createGroupbox(title, leftColumn)
+            table.insert(self.LeftGroups, group)
+            group.Container.Visible = false
+            return group
+        end
+        
+        -- AddRightGroupbox method
+        function tab:AddRightGroupbox(title)
+            local group = createGroupbox(title, rightColumn)
+            table.insert(self.RightGroups, group)
+            group.Container.Visible = false
             return group
         end
         
@@ -911,7 +922,7 @@ function Library:Notify(config)
     local notification = Create("Frame", {
         Size = UDim2.new(0, 320, 0, 0),
         Position = UDim2.new(1, 20, 0, 20),
-        BackgroundColor3 = "Surface",
+        BackgroundColor3 = Scheme.Surface,
         BackgroundTransparency = 0.1,
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.Y,
@@ -942,7 +953,7 @@ function Library:Notify(config)
         Size = UDim2.new(1, 0, 0, 20),
         BackgroundTransparency = 1,
         Text = title,
-        TextColor3 = "Text",
+        TextColor3 = Scheme.Text,
         TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
@@ -954,7 +965,7 @@ function Library:Notify(config)
         Position = UDim2.fromOffset(0, 20),
         BackgroundTransparency = 1,
         Text = message,
-        TextColor3 = "TextSecondary",
+        TextColor3 = Scheme.TextSecondary,
         TextSize = 14,
         TextWrapped = true,
         TextXAlignment = Enum.TextXAlignment.Left,
